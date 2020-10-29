@@ -87,14 +87,14 @@ public class ASTBuilder extends YxBaseVisitor<ASTNode> {
         cmpOpType cmpOp = ctx.Equal() != null ? cmpOpType.eq :
                             (ctx.NotEqual() != null ? cmpOpType.neq : null);
 
-        return biOp != null ? (new binaryExprNode(lhs, rhs, biOp, new position(ctx))) :
-                                (new cmpExprNode(lhs, rhs, cmpOp, new position(ctx)));
+        return biOp != null ? (new binaryExprNode(lhs, rhs, biOp, intType, new position(ctx))) :
+                                (new cmpExprNode(lhs, rhs, cmpOp, boolType, new position(ctx)));
     }
 
     @Override public ASTNode visitAssignExpr(YxParser.AssignExprContext ctx) {
         ExprNode lhs = (ExprNode) visit(ctx.expression(0)),
                  rhs = (ExprNode) visit(ctx.expression(1));
-        return new assignExprNode(lhs, rhs, new position(ctx));
+        return new assignExprNode(lhs, rhs, intType, new position(ctx));
     }
 
     @Override public ASTNode visitPrimary(YxParser.PrimaryContext ctx) {

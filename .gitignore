@@ -23,3 +23,6 @@
 hs_err_pid*
 
 .idea/
+/test.yx
+/out/
+/output.s

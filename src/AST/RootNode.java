@@ -11,7 +11,8 @@ public class RootNode extends ASTNode {
     public RootNode(position pos) {
         super(pos);
         stmts = new ArrayList<>();
-        Type intType = new Type(), boolType = new Type();
+        intType = new Type();
+        boolType = new Type();
         intType.isInt = true;
         boolType.isBool = true;
     }

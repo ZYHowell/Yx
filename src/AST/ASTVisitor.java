@@ -1,12 +1,11 @@
 package AST;
 
-/* anyone going to write a compiler like this is suggested to consider
-   if rebuild an AST out ANTLR is essential. */
 public interface ASTVisitor {
-    void visit(ASTNode it);
+    void visit(RootNode it);
 
     void visit(varDefStmtNode it);
     void visit(returnStmtNode it);
+    void visit(blockStmtNode it);
     void visit(exprStmtNode it);
     void visit(ifStmtNode it);
 

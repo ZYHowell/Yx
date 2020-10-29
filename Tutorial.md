@@ -250,3 +250,80 @@ return new varDefStmtNode(name, expr, new position(ctx));
 }
 ```
 
+##### Scope
+
+In global scope, the type system is recorded. But in this language it is not required since we only have ```int``` and ```bool```. 
+
+All scope records variables defined in it. 
+
+```java
+import Util.error.semanticError;
+import java.util.HashSet;
+
+public class Scope {
+
+    private HashSet<String> members;
+    private Scope parentScope;
+
+
+    public Scope(Scope parentScope) {
+        members = new HashSet<>();
+        this.parentScope = parentScope;
+    }
+
+    public Scope parentScope() {
+        return parentScope;
+    }
+
+    public void defineVariable(String name, position pos) {
+        if (members.contains(name))
+            throw new semanticError("member redefine", pos);
+        members.add(name);
+    }
+
+    public boolean containsVariable(String name, boolean lookUpon) {
+        if (members.contains(name)) return true;
+        else if (parentScope != null && lookUpon) return parentScope.containsMember(name, true);
+        else return false;
+    }
+}
+```
+
+##### Semantic
+
+Now we can do the semantic check. In Yx, We need to consider: 
+
+1. If the type matches. 
+
+   So we introduce attribute ```type``` for each ```ExprNode```. Luckily, in Yx the type of all ```ExprNode``` should be ```int```. But in Mx, setting type in semantic check stage is required and in C-like language, type infer is required. 
+
+2. Right-value at left. 
+
+   So we introduce ```isAssignable``` for each ```ExprNode```. 
+
+3. undefined/multi-define variable. 
+
+Is there anything more? In Mx there are of course more to consider, and maybe some more AST visitors are required to do preprocess. 
+
+A fragment of the semantic checker is like: 
+
+```java
+@Override
+public void visit(varDefStmtNode it) {
+    if (it.init != null) {
+        it.init.accept(this);
+        if (!it.init.type.isInt)
+            throw new semanticError("Semantic Error: type not match.",
+                                    it.init.pos);
+    }
+    currentScope.defineVariable(it.name, it.pos);
+}
+```
+
+Mention that the order is important. In the above example, if we define the variable at the beginning of the function, the case below can not be detected: 
+
+```
+int x = x + 1;
+```
+
+So you'd better be very careful. 

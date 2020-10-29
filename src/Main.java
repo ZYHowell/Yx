@@ -1,5 +1,6 @@
 import AST.RootNode;
 import Frontend.ASTBuilder;
+import Frontend.SemanticChecker;
 import Parser.YxLexer;
 import Parser.YxParser;
 import Util.YxErrorListener;
@@ -10,13 +11,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.PrintStream;
 
 
 public class Main {
     public static void main(String[] args) throws Exception{
 
-        PrintStream pst = new PrintStream("output.s");
         String name = "test.yx";
         InputStream input = new FileInputStream(name);
 
@@ -32,7 +31,7 @@ public class Main {
             ParseTree parseTreeRoot = parser.program();
             ASTBuilder astBuilder = new ASTBuilder();
             ASTRoot = (RootNode)astBuilder.visit(parseTreeRoot);
-
+            new SemanticChecker().visit(ASTRoot);
         } catch (error er) {
             System.err.println(er.toString());
             throw new RuntimeException();
