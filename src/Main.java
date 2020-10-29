@@ -1,3 +1,4 @@
+import AST.RootNode;
 import Frontend.ASTBuilder;
 import Parser.YxLexer;
 import Parser.YxParser;
@@ -20,8 +21,7 @@ public class Main {
         InputStream input = new FileInputStream(name);
 
         try {
-//            rootNode ASTRoot;
-//            globalScope gScope = new globalScope();
+            RootNode ASTRoot;
 
             YxLexer lexer = new YxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();
@@ -31,10 +31,7 @@ public class Main {
             parser.addErrorListener(new YxErrorListener());
             ParseTree parseTreeRoot = parser.program();
             ASTBuilder astBuilder = new ASTBuilder();
-//            ASTRoot = (rootNode)astBuilder.visit(parseTreeRoot);
-//            new SymbolCollector(gScope, irRoot).visit(ASTRoot);
-//            new TypeFilter(gScope).visit(ASTRoot);
-//            new SemanticChecker(gScope, irRoot).visit(ASTRoot);
+            ASTRoot = (RootNode)astBuilder.visit(parseTreeRoot);
 
         } catch (error er) {
             System.err.println(er.toString());

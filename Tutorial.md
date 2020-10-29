@@ -196,6 +196,7 @@ Although the parsed program is tree-like, an AST is still required since each no
 	- StmtNode		// node as a statement
 		- varDefStmtNode
 		- returnStmtNode
+		- blockStmtNode
 		- exprStmtNode
 		- ifStmtNode
 	- ExprNode		// node as an expression
@@ -228,6 +229,24 @@ public class ifStmtNode extends StmtNode {
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
+}
+```
+
+Notice that, the return value type of AST visitor can be any one rather than void. This is based on your own design. 
+
+##### AST Builder
+
+Build the AST. The AST Builder is a visitor on the parse tree. 
+
+This step is trivial. Here's an example: 
+
+```java
+@Override public ASTNode visitVarDef(YxParser.VarDefContext ctx) {
+String name = ctx.Identifier().toString();
+ExprNode expr = null;
+if (ctx.expression() != null) expr = (ExprNode)visit(ctx.expression());
+
+return new varDefStmtNode(name, expr, new position(ctx));
 }
 ```
 
