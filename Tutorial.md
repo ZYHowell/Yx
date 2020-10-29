@@ -185,3 +185,49 @@ public class YxErrorListener extends BaseErrorListener {
     }
 }
 ```
+
+##### Design The AST
+
+Although the parsed program is tree-like, an AST is still required since each node should have some more value. It is designed as: 
+
+```
+- ASTNode
+	- RootNode		// node as a root
+	- StmtNode		// node as a statement
+		- varDefStmtNode
+		- returnStmtNode
+		- exprStmtNode
+		- ifStmtNode
+	- ExprNode		// node as an expression
+		- assignExprNode
+		- binaryExprNode
+		- constExprNode
+		- cmpExprNode
+		- varExprNode
+```
+
+As an example, the most naïve implementation of ifStmtNode is: 
+
+```java
+package AST;
+
+import Util.position;
+
+public class ifStmtNode extends StmtNode {
+    ExprNode condition;
+    StmtNode thenStmt, elseStmt;
+
+    public ifStmtNode(ExprNode condition, StmtNode thenStmt, StmtNode elseStmt, position pos) {
+        super(pos);
+        this.condition = condition;
+        this.thenStmt = thenStmt;
+        this.elseStmt = elseStmt;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+```
+

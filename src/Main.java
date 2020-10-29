@@ -20,6 +20,9 @@ public class Main {
         InputStream input = new FileInputStream(name);
 
         try {
+//            rootNode ASTRoot;
+//            globalScope gScope = new globalScope();
+
             YxLexer lexer = new YxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();
             lexer.addErrorListener(new YxErrorListener());
@@ -27,6 +30,11 @@ public class Main {
             parser.removeErrorListeners();
             parser.addErrorListener(new YxErrorListener());
             ParseTree parseTreeRoot = parser.program();
+            ASTBuilder astBuilder = new ASTBuilder();
+//            ASTRoot = (rootNode)astBuilder.visit(parseTreeRoot);
+//            new SymbolCollector(gScope, irRoot).visit(ASTRoot);
+//            new TypeFilter(gScope).visit(ASTRoot);
+//            new SemanticChecker(gScope, irRoot).visit(ASTRoot);
 
         } catch (error er) {
             System.err.println(er.toString());
