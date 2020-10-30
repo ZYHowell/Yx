@@ -295,7 +295,7 @@ Now we can do the semantic check. In Yx, We need to consider:
 
 1. If the type matches. 
 
-   So we introduce attribute ```type``` for each ```ExprNode```. Luckily, in Yx the type of all ```ExprNode``` should be ```int```. But in Mx, setting type in semantic check stage is required and in C-like language, type infer is required. 
+   So we introduce attribute ```type``` for each ```ExprNode```. Luckily, in Yx the type of each ```ExprNode``` is known(```int``` except for ```cmpExprNode```). But in Mx, setting type in semantic check stage is required and in C-like language, type infer is required. 
 
 2. Right-value at left. 
 
