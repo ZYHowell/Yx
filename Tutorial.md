@@ -16,8 +16,8 @@ A statement can only be:
 
 1. a definition of a variable
 2. an expression
-3. an 'if-else' 
-4. a return
+3. 'if-else' 
+4. return
 
 #### Implementation of Naïve Front-End
 
@@ -31,8 +31,8 @@ In Mx, function and class definition is between program and statement.
 
 The grammar of '.g4' file is known. Only few parts to mention:
 
-1. use of ```#```
-2. use of ```<assoc=right>```
+1. use of `#`
+2. use of `<assoc=right>`
 
 ```Antlr4
 grammar Yx;
@@ -143,7 +143,7 @@ LineComment
 
 ##### The Parse Part in compiler
 
-Build ```YxLexer.java``` and ```YxParser.java```
+Build `YxLexer.java` and `YxParser.java` by ANTLR4. 
 
 Then use them in main: 
 
@@ -166,7 +166,7 @@ public static void main(String[] args) throws Exception{
 }
 ```
 
-The ```error``` class is a trivial self-implemented error type. The ```YxErrorListener``` is defined as: 
+The `error` class is a trivial self-implemented error type. The `YxErrorListener` is defined as: 
 
 ```java
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -252,9 +252,9 @@ return new varDefStmtNode(name, expr, new position(ctx));
 
 ##### Scope
 
-In global scope, the type system is recorded. But in this language it is not required since we only have ```int``` and ```bool```. 
+In global scope, the type system is recorded. But in this language it is not required since we only have `int` and `bool`. 
 
-All scope records variables defined in it. 
+Every scope records variables defined in it. 
 
 ```java
 import Util.error.semanticError;
@@ -295,11 +295,11 @@ Now we can do the semantic check. In Yx, We need to consider:
 
 1. If the type matches. 
 
-   So we introduce attribute ```type``` for each ```ExprNode```. Luckily, in Yx the type of each ```ExprNode``` is known(```int``` except for ```cmpExprNode```). But in Mx, setting type in semantic check stage is required and in C-like language, type infer is required. 
+   So we introduce attribute `type` for each `ExprNode`. Luckily, in Yx the type of each ```ExprNode``` is known(`int` except for `cmpExprNode`). But in Mx, setting type in semantic check stage is required and in OOP language like C++, type infer is required. 
 
 2. Right-value at left. 
 
-   So we introduce ```isAssignable``` for each ```ExprNode```. 
+   So we introduce `isAssignable` for each `ExprNode`. 
 
 3. undefined/multi-define variable. 
 
