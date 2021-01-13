@@ -2,26 +2,58 @@ package Frontend;
 
 import AST.*;
 import Util.Scope;
+import Util.Type;
 import Util.error.semanticError;
+import Util.globalScope;
 
 public class SemanticChecker implements ASTVisitor {
-    Scope currentScope;
+    private Scope currentScope;
+    private globalScope gScope;
+    private Type currentStruct = null;
+
+    public SemanticChecker(globalScope gScope) {
+        currentScope = this.gScope = gScope;
+    }
 
     @Override
     public void visit(RootNode it) {
-        currentScope = new Scope(null);
+        it.strDefs.forEach(sd -> sd.accept(this));
+        // we SHOULD check struct definitions first
+        it.fn.accept(this);
+    }
+
+    @Override
+    public void visit(structDefNode it) {
+        currentStruct = gScope.getTypeFromName(it.name, it.pos);
+        it.varDefs.forEach(vd -> vd.accept(this));
+        currentStruct = null;
+    }
+
+    @Override
+    public void visit(FnRootNode it) {
+        currentScope = new Scope(currentScope);
         for (StmtNode stmt : it.stmts) stmt.accept(this);
     }
 
     @Override
     public void visit(varDefStmtNode it) {
+        if (currentStruct != null) {
+            assert (currentStruct.members != null);
+            if (currentStruct.members.containsKey(it.name))
+                throw new semanticError("redefinition of member " + it.name, it.pos);
+            currentStruct.members.put(it.name, gScope.getTypeFromName(it.typeName, it.pos));
+            if (it.init != null)
+                throw new semanticError("Yx does not support default init of members",
+                            it.init.pos);
+        }
+
         if (it.init != null) {
             it.init.accept(this);
             if (!it.init.type.isInt)
                 throw new semanticError("Semantic Error: type not match. It should be int",
-                                        it.init.pos);
+                            it.init.pos);
         }
-        currentScope.defineVariable(it.name, it.pos);
+        currentScope.defineVariable(it.name, gScope.getTypeFromName(it.typeName, it.pos), it.pos);
     }
 
     @Override
@@ -66,6 +98,7 @@ public class SemanticChecker implements ASTVisitor {
             throw new semanticError("Semantic Error: type not match. ", it.pos);
         if (!it.lhs.isAssignable())
             throw new semanticError("Semantic Error: not assignable", it.lhs.pos);
+        it.type = it.rhs.type;
     }
 
     @Override
@@ -95,5 +128,6 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(varExprNode it) {
         if (!currentScope.containsVariable(it.name, true))
             throw new semanticError("Semantic Error: variable not defined. ", it.pos);
+        it.type = currentScope.getType(it.name, true);
     }
 }

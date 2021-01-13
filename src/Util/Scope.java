@@ -1,16 +1,17 @@
 package Util;
 
 import Util.error.semanticError;
-import java.util.HashSet;
+
+import java.util.HashMap;
 
 public class Scope {
 
-    private HashSet<String> members;
+    private HashMap<String, Type> members;
     private Scope parentScope;
 
 
     public Scope(Scope parentScope) {
-        members = new HashSet<>();
+        members = new HashMap<>();
         this.parentScope = parentScope;
     }
 
@@ -18,16 +19,22 @@ public class Scope {
         return parentScope;
     }
 
-    public void defineVariable(String name, position pos) {
-        if (members.contains(name))
+    public void defineVariable(String name, Type t, position pos) {
+        if (members.containsKey(name))
             throw new semanticError("Semantic Error: variable redefine", pos);
-        members.add(name);
+        members.put(name, t);
     }
 
     public boolean containsVariable(String name, boolean lookUpon) {
-        if (members.contains(name)) return true;
+        if (members.containsKey(name)) return true;
         else if (parentScope != null && lookUpon)
             return parentScope.containsVariable(name, true);
         else return false;
+    }
+    public Type getType(String name, boolean lookUpon) {
+        if (members.containsKey(name)) return members.get(name);
+        else if (parentScope != null && lookUpon)
+            return parentScope.getType(name, true);
+        return null;
     }
 }

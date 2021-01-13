@@ -4,22 +4,39 @@ import AST.*;
 import Parser.YxBaseVisitor;
 import Parser.YxParser;
 import Util.Type;
+import Util.globalScope;
 import Util.position;
 import org.antlr.v4.runtime.ParserRuleContext;
 import AST.binaryExprNode.binaryOpType;
 import AST.cmpExprNode.cmpOpType;
 
-import java.util.ArrayList;
-
 public class ASTBuilder extends YxBaseVisitor<ASTNode> {
+
+    private globalScope gScope;
+    public ASTBuilder(globalScope gScope) {
+        this.gScope = gScope;
+    }
 
     Type intType, boolType;
 
     @Override public ASTNode visitProgram(YxParser.ProgramContext ctx) {
+        RootNode root = new RootNode(new position(ctx), (FnRootNode)visit(ctx.mainFn()));
+        ctx.classDef().forEach(cd -> root.strDefs.add((structDefNode) visit(cd)));
+        return root;
+    }
 
-        RootNode root = new RootNode(new position(ctx));
+    @Override public ASTNode visitClassDef(YxParser.ClassDefContext ctx) {
+        structDefNode structDef = new structDefNode(new position(ctx), ctx.Identifier().toString());
+        ctx.varDef().forEach(vd -> structDef.varDefs.add((varDefStmtNode) visit(vd)));
+        return structDef;
+    }
+
+    @Override public ASTNode visitMainFn(YxParser.MainFnContext ctx) {
+        FnRootNode root = new FnRootNode(new position(ctx));
         intType = root.intType;
         boolType = root.boolType;
+        gScope.addType("int", intType, root.pos);
+        gScope.addType("bool", boolType, root.pos);
 
         if (ctx.suite() != null) {
             for (ParserRuleContext stmt : ctx.suite().statement())
@@ -29,11 +46,15 @@ public class ASTBuilder extends YxBaseVisitor<ASTNode> {
     }
 
     @Override public ASTNode visitVarDef(YxParser.VarDefContext ctx) {
-        String name = ctx.Identifier().toString();
         ExprNode expr = null;
+        String typeName;
+        if (ctx.type().Int() != null) typeName = ctx.type().Int().toString();
+        else typeName = ctx.type().Identifier().toString();
         if (ctx.expression() != null) expr = (ExprNode)visit(ctx.expression());
 
-        return new varDefStmtNode(name, expr, new position(ctx));
+        return new varDefStmtNode(typeName,
+                    ctx.Identifier().toString(),
+                    expr, new position(ctx));
     }
 
     @Override public ASTNode visitSuite(YxParser.SuiteContext ctx) {
@@ -94,14 +115,13 @@ public class ASTBuilder extends YxBaseVisitor<ASTNode> {
     @Override public ASTNode visitAssignExpr(YxParser.AssignExprContext ctx) {
         ExprNode lhs = (ExprNode) visit(ctx.expression(0)),
                  rhs = (ExprNode) visit(ctx.expression(1));
-        return new assignExprNode(lhs, rhs, intType, new position(ctx));
+        return new assignExprNode(lhs, rhs, new position(ctx));
     }
 
     @Override public ASTNode visitPrimary(YxParser.PrimaryContext ctx) {
         if (ctx.expression() != null) return visit(ctx.expression());
         else if (ctx.literal() != null) return visit(ctx.literal());
-        else return new varExprNode(ctx.Identifier().toString(),
-                                    intType, new position(ctx.Identifier()));
+        else return new varExprNode(ctx.Identifier().toString(), new position(ctx.Identifier()));
     }
 
     @Override public ASTNode visitLiteral(YxParser.LiteralContext ctx) {

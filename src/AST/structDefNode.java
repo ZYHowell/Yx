@@ -1,22 +1,20 @@
 package AST;
 
-import Util.Type;
 import Util.position;
 
-public class varExprNode extends ExprNode {
+import java.util.ArrayList;
+
+public class structDefNode extends ASTNode {
+    public ArrayList<varDefStmtNode> varDefs = new ArrayList<>();
     public String name;
 
-    public varExprNode(String name, position pos) {
+    public structDefNode(position pos, String name) {
         super(pos);
         this.name = name;
-        type = null;
     }
 
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
-
-    @Override
-    public boolean isAssignable() {return true;}
 }

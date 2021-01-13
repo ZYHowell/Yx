@@ -18,6 +18,16 @@ public interface YxListener extends ParseTreeListener {
 	 */
 	void exitProgram(YxParser.ProgramContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link YxParser#mainFn}.
+	 * @param ctx the parse tree
+	 */
+	void enterMainFn(YxParser.MainFnContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link YxParser#mainFn}.
+	 * @param ctx the parse tree
+	 */
+	void exitMainFn(YxParser.MainFnContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link YxParser#varDef}.
 	 * @param ctx the parse tree
 	 */
@@ -27,6 +37,16 @@ public interface YxListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitVarDef(YxParser.VarDefContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link YxParser#classDef}.
+	 * @param ctx the parse tree
+	 */
+	void enterClassDef(YxParser.ClassDefContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link YxParser#classDef}.
+	 * @param ctx the parse tree
+	 */
+	void exitClassDef(YxParser.ClassDefContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link YxParser#suite}.
 	 * @param ctx the parse tree
@@ -165,4 +185,14 @@ public interface YxListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitLiteral(YxParser.LiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link YxParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterType(YxParser.TypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link YxParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitType(YxParser.TypeContext ctx);
 }

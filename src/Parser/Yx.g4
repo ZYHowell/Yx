@@ -1,8 +1,11 @@
 grammar Yx;
 
-program: 'int main()' suite EOF;
+program: classDef* mainFn;
 
-varDef : Int Identifier ('=' expression)? ';';
+mainFn: 'int' 'main()' suite EOF;
+
+varDef : type Identifier ('=' expression)? ';';
+classDef : 'struct' Identifier '{' varDef* '}'';';
 
 suite : '{' statement* '}';
 
@@ -33,10 +36,13 @@ literal
     : DecimalInteger
     ;
 
+type : Int | Identifier;
+
 Int : 'int';
 If : 'if';
 Else : 'else';
 Return : 'return';
+Struct: 'struct';
 
 LeftParen : '(';
 RightParen : ')';

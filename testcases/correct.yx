@@ -1,7 +1,12 @@
+struct A {
+    int a;
+}
 int main(){
     int a=1;
     int b=2;
     int c=3;
+    A x;
+    A y;
 
     {
         a=b+c;
@@ -13,6 +18,7 @@ int main(){
         }
         int b = 0;
         if ((a == b) == (a == c)) a = 1;
+        if (x != y) x = y;
     }
     return (a+b)+c;
 }

@@ -17,11 +17,23 @@ public interface YxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProgram(YxParser.ProgramContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link YxParser#mainFn}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMainFn(YxParser.MainFnContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link YxParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitVarDef(YxParser.VarDefContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link YxParser#classDef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClassDef(YxParser.ClassDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link YxParser#suite}.
 	 * @param ctx the parse tree
@@ -103,4 +115,10 @@ public interface YxVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitLiteral(YxParser.LiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link YxParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitType(YxParser.TypeContext ctx);
 }

@@ -1,10 +1,12 @@
 Yx: a simplified smallest grammar. 
 
-#### Grammar
+### Grammar
 
 ##### Type
 
-It only has int and bool type(but no bool variable)
+It has int and bool type as default(but no bool variable)
+
+It also support definition of struct just in the way of C++. But ignore this line at first(until [Intro to type](#Brief introduction to type)). 
 
 ##### Arithmetic operation
 
@@ -16,12 +18,12 @@ A statement can only be:
 
 1. a definition of a variable
 2. an expression
-3. 'if-else' 
-4. return
+3. `if`-`else` statement 
+4. `return`
 
-#### Implementation of Naïve Front-End
+### Implementation of Naïve Front-End
 
-##### Write the grammar
+#### Write the grammar
 
 A native order is: 
 
@@ -141,7 +143,7 @@ LineComment
     ;
 ```
 
-##### The Parse Part in compiler
+#### The Parse Part in compiler
 
 Build `YxLexer.java` and `YxParser.java` by ANTLR4. 
 
@@ -186,7 +188,7 @@ public class YxErrorListener extends BaseErrorListener {
 }
 ```
 
-##### Design The AST
+#### Design The AST
 
 Although the parsed program is tree-like, an AST is still required since each node should have some more value. It is designed as: 
 
@@ -234,7 +236,7 @@ public class ifStmtNode extends StmtNode {
 
 Notice that, the return value type of AST visitor can be any one rather than void. This is based on your own design. 
 
-##### AST Builder
+#### AST Builder
 
 Build the AST. The AST Builder is a visitor on the parse tree. 
 
@@ -250,7 +252,7 @@ return new varDefStmtNode(name, expr, new position(ctx));
 }
 ```
 
-##### Scope
+#### Scope
 
 In global scope, the type system is recorded. But in this language it is not required since we only have `int` and `bool`. 
 
@@ -289,7 +291,7 @@ public class Scope {
 }
 ```
 
-##### Semantic
+#### Semantic
 
 Now we can do the semantic check. In Yx, We need to consider: 
 
@@ -327,3 +329,93 @@ int x = x + 1;
 ```
 
 So you'd better be very careful. 
+
+#### Brief introduction to type
+
+To explain how to do semantic check with type, we introduce the following grammar: 
+
+```Antlr4
+classDef : 'struct' Identifier '{' varDef* '}'';';
+```
+
+We also modify `varDef` and `program`: 
+
+```Antlr4
+program: classDef* mainFn;
+
+mainFn: 'int' 'main()' suite EOF;	// original program
+
+varDef : type Identifier ('=' expression)? ';';
+type : Int | Identifier;
+```
+
+You can easily add the corresponding `ASTNode` if you read the prior part carefully. So we skip the work. Assume `fnNode`(corresponding to `mainFn`) and `classDefNode` are implemented. 
+
+We now face a problem: how to deal with: 
+
+```
+struct a{
+    b x;
+};
+struct b{
+    a x;
+};
+```
+
+Of course, this is not a good design in C/C++ since you can have x.x.x...... However, in Mx and Yx, all variables are in form of reference, so we can have: 
+
+```java
+a y;
+y.x = null;
+```
+
+And the design above is good. 
+
+What is the problem? If you check the correctness of `struct a`, you do not know if `b` is a legal type, vise versa. 
+
+To solve the problem, we use another pass named `SymbolCollector`, which briefly collects all type names into a global scope. A global scope is a class derived from `Scope` by adding a map to collect these types. See `Util/globalScope` for more details. 
+
+```java
+@Override public void visit(structDefNode it) {
+    Type struct = new Type();
+    struct.members = new HashMap<>();
+    it.varDefs.forEach(vd -> vd.accept(this));
+    gScope.addType(it.name, struct, it.pos);
+}
+```
+
+After this pass, we already have the name of all available types. So we can check the type of members in a struct: 
+
+```java
+if (currentStruct != null) {
+    assert (currentStruct.members != null);
+    if (currentStruct.members.containsKey(it.name))
+        throw new semanticError("redefinition of member " + it.name, it.pos);
+    currentStruct.members.put(it.name, gScope.getTypeFromName(it.typeName, it.pos));
+    if (it.init != null)
+        throw new semanticError("Yx does not support default init of members",
+                                it.init.pos);
+}
+```
+
+Modifications above help check the definition of struct and variable. Then we modify original `Scope` to support variables **in experissions** with type not only `int`: 
+
+```java
+public Type getType(String name, boolean lookUpon) {
+    if (members.containsKey(name)) return members.get(name);
+    else if (parentScope != null && lookUpon)
+        return parentScope.getType(name, true);
+    return null;
+}
+```
+
+Now, as the type of `varExprNode` and `assignExprNode` can be not only `intType`, we slightly modify it by adding: 
+```java
+it.type = it.rhs.type
+```
+at the end of `visit（assignExprNode it）` and 
+```java
+it.type = currentScope.getType(it.name, true)
+```
+at the end of `visit(varExprNode it)`. 
+

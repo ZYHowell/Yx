@@ -27,6 +27,18 @@ public class YxBaseListener implements YxListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterMainFn(YxParser.MainFnContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMainFn(YxParser.MainFnContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterVarDef(YxParser.VarDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -34,6 +46,18 @@ public class YxBaseListener implements YxListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitVarDef(YxParser.VarDefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterClassDef(YxParser.ClassDefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitClassDef(YxParser.ClassDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -178,6 +202,18 @@ public class YxBaseListener implements YxListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitLiteral(YxParser.LiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterType(YxParser.TypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitType(YxParser.TypeContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

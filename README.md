@@ -5,7 +5,9 @@ This is a language only for demo use.
 
 ##### Type
 
-It only has int and bool type(but no bool variable)
+It has `int` and `bool` type in default(but no bool variable)
+
+It also support definition of struct
 
 ##### Arithmetic operation
 

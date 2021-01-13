@@ -3,12 +3,13 @@ package AST;
 import Util.position;
 
 public class varDefStmtNode extends StmtNode {
-    public String name;
+    public String name, typeName;
     public ExprNode init;
 
-    public varDefStmtNode(String name, ExprNode init, position pos) {
+    public varDefStmtNode(String typeName, String name, ExprNode init, position pos) {
         super(pos);
         this.name = name;
+        this.typeName = typeName;
         this.init = init;
     }
 
