@@ -419,3 +419,128 @@ it.type = currentScope.getType(it.name, true)
 ```
 at the end of `visit(varExprNode it)`. 
 
+### Codegen
+
+welcome to the next stage! 
+
+Now you have a abstract semantic tree passing semantic check. The next thing to do is to turn it into corresponding assembly code. Generally, you may think about how to turn AST into assembly code directly, but in fact, we have an intermediate stage named IR(Intermediate Representation). 
+
+This is because both AST and assembly code is not convenient for us to do optimization. Hence, we design our own IR and the process of compiling is expected to be: 
+
+```
+code ---> AST ---> IR ---> IR ... ---> IR ---> assembly
+        frontend        optimization       backend
+```
+
+IR is a very personal design, and here we only provide an approach to design one: 
+
+#### IR Design
+
+Consider why we do not use AST. For the case: 
+
+```C++
+x = a + b + c + d;
+y = a + b + c + e;
+```
+
+The result of `a+b+c` can be only calculated once. This shows such a case: In two subtrees, some smaller parts are isomorphic. To detect the case, a pairwise comparison for each parts are required. 
+
+This can be simplified to the following method: we pairwisely compare trees with a height in each iteration, and in the next iteration, compare trees exactly one higher. 
+
+Notice that, actually we do the following: In the first iteration, `a+b` is the same subtree. Then we let `apb = a+b` and in the next iteration `a+b+c` is the same subtree, which can be turned to `apb+c`. If we use such `apb`, we can say that each iteration we actually do the same thing: compare trees with height of two. 
+
+Here we notice a deeper fact: the tree structure is not essential in optimization. Instead, we only need expressions with only one operator and at most two operands. More complex expressions can be turned to this one by splitting them into parts. (**This conclusion is correct only for Yx**, although for Mx and languages like C++ it is almost sure correct)
+
+The idea as another advantage: in assembly code, we only have operations with two operands. 
+
+By this idea, our IR is designed to have grammar: 
+
+```
+x = u op v;
+```
+
+where `x,u,v` are all constants, variables or intermediate result(for instance, `apb` in the case above). Or, to assume the program runs on a machine, we call them registers storing values of variables or intermediate results(abbreviated as registers). 
+
+What about structs? As we only have assignments for structs, which is actually assignments of pointers, this is nothing different: register of a struct variable is the register storing the value of pointer of the struct variable. 
+
+​	What if we add a grammar to access the member of a struct? First get the pointer of the member using an offset, then introduce load/store instruction to get access to the value of the pointer. 
+
+​	What if we add a grammar to allocate and free the memory of the struct? Add a grammar in IR to call `malloc/free` method. 
+
+What about `if-then`? Notice that by `a op b` operations, value of the boolean expression is stored in a register. So we can introduce branch instructions to deal with it: 
+
+```
+br u label1, label2
+j label
+```
+
+The jump instruction is at the end of true branch and false branch to jump into the same place: the next statement after `if-else`. 
+
+In all, we have grammars of IR: 
+
+```
+x = u op v, (op = '+'/'-'/'=='/'!=')
+br u label1, label2
+j label
+ret u
+```
+
+The last thing is to define a block: it starts from a label and end at the first branch/jump instruction. The definition of block is important since it is a kind of CFG(control flow graph), and many optimizations are based on CFG, just like many optimizations are about binary operation. 
+
+#### IRBuilder
+
+We first define classes for IR grammars: registers, constants, blocks, three kinds of statements. Labels can be represented by blocks. 
+
+Now you must have some knowledge of Java(or the language you use), so we skip the definition of these classes. 
+
+As this is a very trivial one, we let the size of each register be 32bits(that is, a boolean intermediate result still has size of 32 bits)
+
+Now we have prepared everything for `IRBuilder`. Let's do it. Each `exprNode` in AST corresponds to a constant or a register, so we give `exprNode` a new member named `val`. Now we use this member to construct our IR: 
+
+```java
+@Override
+public void visit(cmpExprNode it) {
+	it.lhs.accept(this);
+	it.rhs.accept(this);
+	register value = new register();
+	binary.opType op = it.opCode == cmpExprNode.cmpOpType.eq ? eq : ne;
+	currentBlock.push_back(new binary(value, it.lhs.val, it.rhs.val, op));
+	it.val = value;
+}
+
+@Override
+public void visit(varExprNode it) {
+	it.val = currentScope.getEntity(it.name, true);
+}
+```
+
+Other `exprNode` are handled likewise. 
+
+The maintenance of `block` should also be mentioned: 
+
+```java
+@Override
+public void visit(ifStmtNode it) {
+    it.condition.accept(this);
+    block trueBranch = new block(), falseBranch = new block();
+    currentBlock.push_back(new branch(it.condition.val, trueBranch, falseBranch));
+
+    block destination = new block();
+    currentBlock = trueBranch;
+    it.thenStmt.accept(this);
+    currentBlock.push_back(new jump(destination));
+    currentBlock = falseBranch;
+    it.elseStmt.accept(this);
+    currentBlock.push_back(new jump(destination));
+    currentBlock = destination;
+}
+```
+
+##### IR Printer
+
+To check the correctness of our IR, we can make an IR printer. Here we also introduce the concept of `Pass`. A `Pass` defines how to visit or modify a `program/function/block`, and in optimization stage, each kind of optimization can be regarded as a `Pass`. The program(or part of the program) passes a `Pass`, which may modify the passed part to do optimization or analyze the part for further optimization, and output the modified program. 
+
+IR Printer is a very typical `Pass`. When the program passes the pass, each block is passed. When a block is passing, the `IRPrinter` pass prints each statement in order. 
+
+For simplicity, we only have one kind of `Pass` in `Yx`, which visits the whole program(in `Yx` it equals the main function). 
+

@@ -1,7 +1,10 @@
 import AST.RootNode;
+import Backend.IRBuilder;
+import Backend.IRPrinter;
 import Frontend.ASTBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
+import MIR.block;
 import Parser.YxLexer;
 import Parser.YxParser;
 import Util.YxErrorListener;
@@ -36,6 +39,10 @@ public class Main {
             ASTRoot = (RootNode)astBuilder.visit(parseTreeRoot);
             new SymbolCollector(gScope).visit(ASTRoot);
             new SemanticChecker(gScope).visit(ASTRoot);
+
+            block rootBlock = new block();
+            new IRBuilder(rootBlock, gScope).visit(ASTRoot);
+            new IRPrinter(System.out).visitBlock(rootBlock);
         } catch (error er) {
             System.err.println(er.toString());
             throw new RuntimeException();
