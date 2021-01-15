@@ -3,10 +3,8 @@ package Backend;
 import Assembly.AsmBlock;
 import Assembly.AsmFn;
 import Assembly.Inst.Inst;
-import Assembly.Operand.VirtualReg;
 
 import java.io.PrintStream;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -16,7 +14,6 @@ public class AsmPrinter {
 
     private AsmFn fn;
     private int blockCnt = 0;
-    private HashMap<VirtualReg, Integer> regIndex = new HashMap<>();
     private List<AsmBlock> printList = new LinkedList<>();
 
     public AsmPrinter(AsmFn fn, PrintStream out) {
@@ -25,9 +22,7 @@ public class AsmPrinter {
     }
 
     private void rename() {
-        fn.blocks.forEach(b -> {
-            b.index = -1;
-        });
+        fn.blocks.forEach(b -> b.index = -1);
         Queue<AsmBlock> queue = new LinkedList<>();
         queue.offer(fn.rootBlock);
         fn.rootBlock.index = blockCnt++;
@@ -44,8 +39,9 @@ public class AsmPrinter {
     }
     public void printBlock(AsmBlock b) {
         out.println(b + ": ");
-        b.instructions.forEach(i -> out.println(i.toString()));
-        out.println("");
+        for (Inst i = b.headInst; i != null; i = i.next) {
+            out.println("\t" + i.toString());
+        }
     }
     public void print() {
         rename();

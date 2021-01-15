@@ -1,9 +1,6 @@
 import AST.RootNode;
 import Assembly.AsmFn;
-import Backend.AsmPrinter;
-import Backend.IRBuilder;
-import Backend.IRPrinter;
-import Backend.InstSelector;
+import Backend.*;
 import Frontend.ASTBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
@@ -50,6 +47,7 @@ public class Main {
 
             AsmFn asmF = new AsmFn();
             new InstSelector(asmF).visitFn(f);
+            new RegAlloc(asmF).work();
             new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
             System.err.println(er.toString());

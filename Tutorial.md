@@ -6,7 +6,7 @@ Yx: a simplified smallest grammar.
 
 It has int and bool type as default(but no bool variable)
 
-It also support definition of struct just in the way of C++. But ignore this line at first(until [Intro to type](#Brief introduction to type)). 
+It also supports definition of struct just in the way of C++. But ignore this line at first(until [Intro to type](#Brief introduction to type)). 
 
 ##### Arithmetic operation
 
@@ -560,10 +560,67 @@ Assume that the program is great-optimized in IR level. Now we turn IR into the 
 
 Notice that, as the output is assembly code, we can have more freedom in this step: instructions like `mv`, `ret`, `li` are more readable. We should also notice that some native operations are not in RISCV assembly instructions. For instance, we do not have `seq` and `sne`, so we need to translate them to `sub`+`seqz/snez`. 
 
-In this step, we still use virtual registers. That is, we assume that there are infinite registers although actually there are 31+`zero`. 
+In this step, we still use virtual registers. That is, we assume that there are infinite registers although actually there are 32(actually less, due to the convention of `zero`, `sp`, `gp`, `tp `etc.). 
 
 When you are at this stage, I believe you have enough knowledge to write your own instruction selection, since all you need is to be careful and consider all cases. 
 
 ##### Asm Printer
 
-Although our registers are still virtual register, we implement the assembly code printer first, in order to help the process of debug for instruction selection. This is nothing different with the IR printer. 
+Although our registers are still virtual register, we implement the assembly code printer first, in order to help the process of debug for instruction selection. This is nothing different from the IR printer. 
+
+#### Register Allocation
+
+This is the final step! We now focus on the problem that registers are limited in RISCV architecture. As the calling convention defines, some of them are caller-save, which means after calling a function, values in the register is not promised to be kept, while others are callee-save, which, in contrast, are kept the same after calling a function. We can also regarded them as caller-responsible and callee-responsible. 
+
+The caller-save registers' liveness is at most from a function call to a function call, while the callee-save registers' liveness is at most cross the whole function. However, once you use such a register, you need to store its original value at the start of the function and restore before the return statement. 
+
+You may think about recording what callee-save registers are used and then add corresponding store/load instructions after all. But there is a more typical way: you can simply add a virtual register for a callee-save physical register, and then add move instructions at the start and end of the function. If the register is not used, by coloring method, the move will be discarded in peephole optimization. 
+
+Here we only talk about naïve register allocation, which uses at most three registers in a time: It stores all virtual registers - each corresponds to a variable/intermediate value - on the stack, loads when the value is required  and stores when the value is modified. So we inserts a load for each used virtual register before an instruction and a store after an instruction. 
+
+We want to consider less, so we use caller-save registers `t0`, `t1`, `t2`, whose indices are 5-7. 
+
+For preparation, we introduce two command: `load` and `store`. For simplicity, all virtual registers are in size of 4B, so only `lw` and `sw` are used. 
+
+```java
+public class Ld extends Inst{
+    public PhyReg rd, addr;
+    public Imm offset;
+
+    public Ld(PhyReg rd, PhyReg addr, Imm offset) {
+        this.rd = rd;
+        this.addr = addr;
+        this.offset = offset;
+    }
+    @Override
+    public String toString() {
+        return "lw " + rd + ", " + addr + "(" + offset + ")";
+    }
+}
+```
+
+```java
+private Inst loadVirtualReg(VirtualReg r, PhyReg rd) {
+    return new Ld(rd, sp, new Imm(r.index * 4));
+}
+private Inst storeVirtualReg(VirtualReg r) {
+    return new St(t2, sp, new Imm(r.index * 4));
+}
+```
+
+The function is nothing but a pass on asm function. One thing should be mentioned is that Java IS A STUPID LANGUAGE, so we implement our own link list to make insertion easier. 
+
+```java
+public void insert_before(Inst i, Inst in) {
+    if (i.prev == null) headInst = in;
+    else i.prev.next = in;
+    in.prev = i.prev; in.next = i; i.prev = in;
+}
+public void insert_after(Inst i, Inst in) {
+    if (i.next == null) tailInst = in;
+    else i.next.prev = in;
+    in.prev = i; in.next = i.next; i.next = in;
+}
+```
+
+It should be mentioned that the stack length should be carefully maintained. In this stupid algorithm and language, the stack length straightly equals $\# \text{ of virtual registers} \times 4$ Bytes, but with function call(which requires some stack space if parameters are too many) and better register allocation algorithm, the stack length is known after register allocation. In this case, you should consider how to fill in the value of Immediate values(`Imm` class in above) as the offset of `store` and `load` instructions. 

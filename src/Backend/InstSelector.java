@@ -39,35 +39,35 @@ public class InstSelector implements Pass {
         B.stmts().forEach(s -> {
             if (s instanceof jump) {
                 jump j = (jump) s;
-                b.instructions.add(new Jp(getAsmBlock(j.destination)));
+                b.push_back(new Jp(getAsmBlock(j.destination)));
                 b.successors.add(getAsmBlock(j.destination));
             } else if (s instanceof branch) {
                 branch br = (branch) s;
                 VirtualReg src;
                 if (br.op instanceof constant) {
                     src = new VirtualReg(cnt++);
-                    b.instructions.add(new Li(src, getImm((constant) br.op)));
+                    b.push_back(new Li(src, getImm((constant) br.op)));
                 }
                 else src = getAsmReg((register) br.op);
-                b.instructions.add(new Bz(src, getAsmBlock(br.falseBranch)));
+                b.push_back(new Bz(src, getAsmBlock(br.falseBranch)));
                 b.successors.add(getAsmBlock(br.falseBranch));
                 AsmBlock suc = getAsmBlock(br.trueBranch);
                 // if (suc.precursor == null) suc.precursor = b;
                 // else     // prune-use
-                b.instructions.add(new Jp(suc));
+                b.push_back(new Jp(suc));
                 b.successors.add(suc);
             } else if (s instanceof ret) {
                 ret r = (ret) s;
                 if (r.value != null) {
                     if (r.value instanceof register)
-                        b.instructions.add(
+                        b.push_back(
                                 new Mv(mainF.phyRegs.get(10), getAsmReg((register) r.value))
                         );
-                    else b.instructions.add(
+                    else b.push_back(
                             new Li(mainF.phyRegs.get(10), getImm((constant) r.value))
                     );
                 }   // First move the return value to x10, then return
-                b.instructions.add(new Ret());
+                b.push_back(new Ret());
             } else if (s instanceof binary) {
                 binary bi = (binary) s;
                 Inst.CalCategory op = bi.op == binary.opType.add ? add : sub;
@@ -76,23 +76,23 @@ public class InstSelector implements Pass {
                     rd = new VirtualReg(cnt++);
                 else rd = getAsmReg(bi.lhs);
                 if (bi.op1 instanceof constant) {
-                    b.instructions.add(new Li(rd, getImm((constant) bi.op2)));
+                    b.push_back(new Li(rd, getImm((constant) bi.op2)));
                 } else if (bi.op2 instanceof constant) {
-                    b.instructions.add(new IType(rd,
+                    b.push_back(new IType(rd,
                             getAsmReg((register)bi.op1),
                             getImm((constant) bi.op2),
                             op)
                     );
                 } else {
-                    b.instructions.add(new RType(rd,
+                    b.push_back(new RType(rd,
                             getAsmReg((register) bi.op1),
                             getAsmReg((register) bi.op2),
                             op));
                 }
                 if (bi.op == binary.opType.eq)
-                    b.instructions.add(new IType(getAsmReg(bi.lhs), rd, new Imm(0), eq));
+                    b.push_back(new IType(getAsmReg(bi.lhs), rd, new Imm(0), eq));
                 else if (bi.op == binary.opType.ne)
-                    b.instructions.add(new IType(getAsmReg(bi.lhs), rd, new Imm(0), ne));
+                    b.push_back(new IType(getAsmReg(bi.lhs), rd, new Imm(0), ne));
                 // Assembly code only has seqz and snez, no seq and sne
             }
         });
