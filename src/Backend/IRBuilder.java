@@ -12,10 +12,12 @@ import static MIR.binary.opType.ne;
 
 public class IRBuilder implements ASTVisitor {
     private block currentBlock;
+    private mainFn fn;
     private Scope currentScope;
     private globalScope gScope;
-    public IRBuilder(block rootBlock, globalScope gScope) {
-        currentBlock = rootBlock;
+    public IRBuilder(mainFn fn, globalScope gScope) {
+        this.fn = fn;
+        currentBlock = fn.rootBlock;
         currentScope = gScope;
         this.gScope = gScope;
     }
@@ -75,25 +77,37 @@ public class IRBuilder implements ASTVisitor {
         it.elseStmt.accept(this);
         currentBlock.push_back(new jump(destination));
         currentBlock = destination;
+
+        fn.blocks.add(trueBranch);fn.blocks.add(falseBranch);fn.blocks.add(destination);
     }
 
     @Override
     public void visit(assignExprNode it) {
         it.lhs.accept(this);
-        it.rhs.accept(this);
-        currentBlock.push_back(
-            new binary((register)it.lhs.val, it.rhs.val, new constant(0), add)
-        );
+        if (it.rhs instanceof binaryExprNode ||
+            it.rhs instanceof cmpExprNode) {
+            it.rhs.val = it.lhs.val;
+            it.rhs.accept(this);
+        } else {
+            it.rhs.accept(this);
+            currentBlock.push_back(
+                    new binary((register) it.lhs.val, it.rhs.val, new constant(0), add)
+            );
+        }
     }
 
     @Override
     public void visit(binaryExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
-        register value = new register();
+        register value;
+        if (it.val != null) value = (register)it.val;
+        else {
+            value = new register();
+            it.val = value;
+        }
         binary.opType op = it.opCode == binaryExprNode.binaryOpType.add ? add : sub;
         currentBlock.push_back(new binary(value, it.lhs.val, it.rhs.val, op));
-        it.val = value;
     }
 
     @Override
@@ -105,10 +119,14 @@ public class IRBuilder implements ASTVisitor {
     public void visit(cmpExprNode it) {
         it.lhs.accept(this);
         it.rhs.accept(this);
-        register value = new register();
+        register value;
+        if (it.val != null) value = (register)it.val;
+        else {
+            value = new register();
+            it.val = value;
+        }
         binary.opType op = it.opCode == cmpExprNode.cmpOpType.eq ? eq : ne;
         currentBlock.push_back(new binary(value, it.lhs.val, it.rhs.val, op));
-        it.val = value;
     }
 
     @Override

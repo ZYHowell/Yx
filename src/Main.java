@@ -1,10 +1,14 @@
 import AST.RootNode;
+import Assembly.AsmFn;
+import Backend.AsmPrinter;
 import Backend.IRBuilder;
 import Backend.IRPrinter;
+import Backend.InstSelector;
 import Frontend.ASTBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
 import MIR.block;
+import MIR.mainFn;
 import Parser.YxLexer;
 import Parser.YxParser;
 import Util.YxErrorListener;
@@ -40,9 +44,13 @@ public class Main {
             new SymbolCollector(gScope).visit(ASTRoot);
             new SemanticChecker(gScope).visit(ASTRoot);
 
-            block rootBlock = new block();
-            new IRBuilder(rootBlock, gScope).visit(ASTRoot);
-            new IRPrinter(System.out).visitBlock(rootBlock);
+            mainFn f = new mainFn();
+            new IRBuilder(f, gScope).visit(ASTRoot);
+            // new IRPrinter(System.out).visitFn(f);
+
+            AsmFn asmF = new AsmFn();
+            new InstSelector(asmF).visitFn(f);
+            new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
             System.err.println(er.toString());
             throw new RuntimeException();

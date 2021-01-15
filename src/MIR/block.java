@@ -4,9 +4,10 @@ import Util.error.internalError;
 import Util.position;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class block {
-    private ArrayList<statement> stmts = new ArrayList<>();
+    private LinkedList<statement> stmts = new LinkedList<>();
     private terminalStmt tailStmt = null;
     public block() {}
     public void push_back(statement stmt) {

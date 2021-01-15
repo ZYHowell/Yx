@@ -451,7 +451,7 @@ Notice that, actually we do the following: In the first iteration, `a+b` is the 
 
 Here we notice a deeper fact: the tree structure is not essential in optimization. Instead, we only need expressions with only one operator and at most two operands. More complex expressions can be turned to this one by splitting them into parts. (**This conclusion is correct only for Yx**, although for Mx and languages like C++ it is almost sure correct)
 
-The idea as another advantage: in assembly code, we only have operations with two operands. 
+The idea as another advantage: in assemble code, we only have operations with two operands. 
 
 By this idea, our IR is designed to have grammar: 
 
@@ -487,7 +487,7 @@ ret u
 
 The last thing is to define a block: it starts from a label and end at the first branch/jump instruction. The definition of block is important since it is a kind of CFG(control flow graph), and many optimizations are based on CFG, just like many optimizations are about binary operation. 
 
-#### IRBuilder
+#### IR Builder
 
 We first define classes for IR grammars: registers, constants, blocks, three kinds of statements. Labels can be represented by blocks. 
 
@@ -544,3 +544,26 @@ IR Printer is a very typical `Pass`. When the program passes the pass, each bloc
 
 For simplicity, we only have one kind of `Pass` in `Yx`, which visits the whole program(in `Yx` it equals the main function). 
 
+##### Prune
+
+It is meaningful to prune some cases in `IRBuilder` to release the pressure of later codegen stages. 
+
+##### Other kinds of IR
+
+The IR above can be identified as a graph IR. There is also tree IR very close to AST structure. You can even have a number of different IR, and lower the program from one IR to another. Each time you turn the program into a lower level of IR, there are some information discarded, just like what happens when you ignore the tree structure of AST and turn it into the graph IR.  As a trade-off, you may get access to some information more easily. 
+
+In all, design your own IR. 
+
+#### Instruction selection
+
+Assume that the program is great-optimized in IR level. Now we turn IR into the assembly code. The first step is to select the correct instruction in assembly language. So we create a sets of classes to represent different assembly instructions. This is nothing different from the steps in IR language, and the pressure is released as our graph IR is very close to assembly code grammar. (So for tree IR, although in `IRBuilder` step there is not that much things, it should also consider a translation from tree shape to graph of blocks in the end.)
+
+Notice that, as the output is assembly code, we can have more freedom in this step: instructions like `mv`, `ret`, `li` are more readable. We should also notice that some native operations are not in RISCV assembly instructions. For instance, we do not have `seq` and `sne`, so we need to translate them to `sub`+`seqz/snez`. 
+
+In this step, we still use virtual registers. That is, we assume that there are infinite registers although actually there are 31+`zero`. 
+
+When you are at this stage, I believe you have enough knowledge to write your own instruction selection, since all you need is to be careful and consider all cases. 
+
+##### Asm Printer
+
+Although our registers are still virtual register, we implement the assembly code printer first, in order to help the process of debug for instruction selection. This is nothing different with the IR printer. 

@@ -22,6 +22,11 @@ public class IRPrinter implements Pass {
         b.successors().forEach(this::visitBlock);
     }
 
+    @Override
+    public void visitFn(mainFn f) {
+        visitBlock(f.rootBlock);
+    }
+
     private String getBlockName(block b) {
         if (blockIndex.containsKey(b)) return "b." + blockIndex.get(b);
         else {
